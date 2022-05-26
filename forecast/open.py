@@ -300,3 +300,146 @@ fg.update_layout(
     width = 1200
 )
 st.plotly_chart(fg)
+
+# VOLUME FORECAST
+
+st.markdown(sub_title_temp.format("#89B6A5" , "white" , "VOLUME FORECAST"),unsafe_allow_html=True)
+
+
+# stockV = pd.read_csv("meb.csv")
+stockv = pd.read_csv("meb.csv")
+
+model1 = keras.models.load_model("model1.h5")
+datesForV = list(stockv['Date'])
+datesForV = [dt.datetime.strptime(date, '%Y-%m-%d').date() for date in datesForV]
+
+
+featuresForV = list(stockv)[1:]
+dataForV = stock[featuresForV]
+dataForV = dataForV.astype(float)
+datasetForV = dataForV.values
+
+print(dataForV.columns)
+
+scForV = StandardScaler()
+sc_datasetForV = scForV.fit_transform(datasetForV)
+pred_scForV = StandardScaler()
+pred_scForV.fit_transform(datasetForV[:, -1: ]) #for output values
+
+XtrainForV = [] #trend to be analyzed
+ytrainForV = []
+
+nFutureForV = 1 #60 #7 #30   # Number of days we want top predict into the future
+nPastForV = 30
+
+rowsForV = dataForV.shape[0]
+colsForV = dataForV.shape[1]
+
+rowsForV = datasetForV.shape[0]
+colsForV = datasetForV.shape[1]
+for i in range(nPastForV ,  rowsForV - nFutureForV +1):
+    XtrainForV.append(sc_datasetForV[i - nPastForV : i , 0:colsForV])
+    ytrainForV.append(sc_datasetForV[i + nFutureForV - 1 : i + nFutureForV , -1])
+
+XtrainForV = np.array(XtrainForV)
+ytrainForV = np.array(ytrainForV)
+
+nFutForV = 30
+
+opt11 , e11 , e22 = st.columns((1,2,2))
+with opt11:
+    nDsV = st.text_input("Enter the days range to forecast (1-90)" , 30);
+    nFutForV = int(nDsV)
+
+
+futureDatesForV = pd.date_range(datesForV[-1], periods=nFutForV, freq='1d').tolist()
+futureDatesListForV = []
+for i in futureDatesForV:
+    futureDatesListForV.append(i.date())
+futurePredsForV = model1.predict(XtrainForV[-nFutForV:])
+trainPredsForV = model1.predict(XtrainForV[nPastForV:])
+
+y_predFutureForV = pred_scForV.inverse_transform(futurePredsForV)
+y_predTrainForV = pred_scForV.inverse_transform(trainPredsForV)
+
+FUT_PREDSforV = pd.DataFrame(y_predFutureForV, columns=["Volume"]).set_index(pd.Series(futureDatesListForV))
+TRAIN_PREDSforV = pd.DataFrame(y_predTrainForV, columns=["Volume"]).set_index(pd.Series(datesForV[2 * nPastForV + nFutureForV - 1:]))
+
+TRAIN_PREDSforV.index = TRAIN_PREDSforV.index.to_series().apply(to_Timestamp)
+
+trainSetForV = pd.DataFrame(dataForV, columns=featuresForV)
+trainSetForV.index = datesForV
+trainSetForV.index = pd.to_datetime(trainSetForV.index)
+
+
+chartV , visualV = st.columns((1,1.5))
+with chartV:
+    fut_preds = FUT_PREDSforV.reset_index()
+    fig = go.Figure(
+        data = [go.Table (columnorder = [0,1], columnwidth = [15,10],
+                          header = dict(
+                              values = ["Date" , "Volume"],
+                              font=dict(size=12, color = 'white'),
+                              fill_color = '#264653',
+                              line_color = 'rgba(255,255,255,0.2)',
+                              align = ['left','center'],
+                              #text wrapping
+                              height=40
+                          )
+                          , cells = dict(
+                values = [fut_preds[K].tolist() for K in fut_preds.columns],
+                font=dict(size=12),
+                align = ['left','center'],
+                line_color = 'rgba(255,255,255,0.2)',
+                height=30))])
+    fig.update_layout(title_text="CHART VIEW",title_font_color = '#264653',title_x=0,margin= dict(l=0,r=10,b=10,t=30), height=480)
+    st.plotly_chart(fig, use_container_width=True)
+with visualV:
+    fig0 = px.line(x=futureDatesListForV, y=FUT_PREDSforV["Volume"] ,
+                   labels={"x" : "Date" , "y":"Volume"} ,
+                   height = 500 ,width=750)
+    fig0.update_layout(
+        title="VISUALS",
+        xaxis_title="Time",
+        yaxis_title="Volume",
+        legend_title="Legend Title",
+    )
+    st.plotly_chart(fig0)
+
+
+
+
+st.markdown(sub_title_temp.format("#89B6A5" , "white" , "MODEL SUMMARY"),unsafe_allow_html=True)
+# st.subheader("FORECASTING MODEL SUMMARY")
+#PLOTTING actual vs. predicted
+# Plotting
+STARTDATE = TRAIN_PREDSforV.index[0]
+# import plotly.graph_objects as go
+fg0 = go.Figure()
+fg0.add_trace(go.Scatter(
+    x = trainSetForV.loc[STARTDATE:].index,
+    y = trainSetForV.loc[STARTDATE:]["Volume"],
+    line=dict(color='blue') , name = 'Actual Volume'
+))
+
+fg0.add_trace(go.Scatter(
+    x = FUT_PREDSforV.index,
+    y = FUT_PREDSforV["Volume"],
+    line=dict(color='red') , name = 'Future Predicted Volume'
+))
+
+fg0.add_trace(go.Scatter(
+    x = TRAIN_PREDSforV.loc[STARTDATE:].index,
+    y = TRAIN_PREDSforV.loc[STARTDATE:]["Volume"],
+    line=dict(color='orange'), name = 'Predicted Train Volume'
+))
+fg0.add_vline(x=min(FUT_PREDSforV.index), line_width=1.5, line_dash="dash", line_color="green")
+
+fg0.update_layout(
+    title="Pred vs. Actual",
+    xaxis_title="Time",
+    yaxis_title="Stock Volume",
+    height = 500 ,
+    width = 1200
+)
+st.plotly_chart(fg0)
