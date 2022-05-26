@@ -10,25 +10,119 @@ from pylab import rcParams
 from plotly.offline import download_plotlyjs , iplot , init_notebook_mode , plot
 import cufflinks as cf
 import plotly.express as px
+import datetime
 # init_notebook_mode(connected=True)
 cf.go_offline()
 import plotly.graph_objects as go
 
 
-
 st.set_page_config(page_title= "Stock Insight" , layout="wide" )
-st.title("Stock Insight")
+
+title_temp = """
+<div style="background-color:{};padding:10px;border-radius:10px">
+<h1 style="color:{};text-align:center;">{}</h1>
+</div>
+"""
+sub_title_temp = """
+<div style="background-color:{};padding:0.5px;border-radius:5px;">
+<h4 style="color:{};text-align:center;">{}</h6>
+</div>
+"""
+
+st.markdown(title_temp.format('#1E3231','white' , "STOCK INSIGHT"),unsafe_allow_html=True)
+st.write("")
+st.write("")
+
 user_in = st.text_input("Enter the company name : " , "MEBL")
 stock = pd.read_csv("meb.csv"); #importing dataset
-col1 , col2 = st.columns(2)
 
-st.subheader(user_in , " STOCK FROM 2018 - 2022")
+st.markdown(sub_title_temp.format("#89B6A5" , "white" , user_in+" STOCK FROM 2018 - 2022"),unsafe_allow_html=True)
+# st.subheader(user_in , " STOCK FROM 2018 - 2022")
+stock_wd_date = stock.set_index("Date")
+col1 , col2 = st.columns((1,1.5))
 with col1:
-    st.subheader("STOCK SUMMARY")
-    st.write(stock)
-
+    fig = go.Figure(
+        data = [go.Table (columnorder = [0,1,2,3,4,5], columnwidth = [15,10,10,10,10,10],
+                          header = dict(
+                              values = list(stock.columns),
+                              font=dict(size=12, color = 'white'),
+                              fill_color = '#264653',
+                              line_color = 'rgba(255,255,255,0.2)',
+                              align = ['left','center'],
+                              #text wrapping
+                              height=40
+                          )
+                          , cells = dict(
+                values = [stock[K].tolist() for K in stock.columns],
+                font=dict(size=12),
+                align = ['left','center'],
+                line_color = 'rgba(255,255,255,0.2)',
+                height=30))])
+    fig.update_layout(title_text="HISTORICAL DATA",title_font_color = '#264653',title_x=0,margin= dict(l=0,r=10,b=10,t=30), height=480)
+    st.plotly_chart(fig, use_container_width=True)
 with col2:
-    userIn = st.text_input("Choose the variable : " , "Close")
+    fg = px.line(x=stock["Date"], y=stock["Open"] ,
+                 labels={"x" : "Date" , "y":"Open"})
+    fg.update_layout(
+        title = "Quick Summary",
+        xaxis_title="Time",
+        yaxis_title="Stock Open Prices",
+        width = 750,
+        height = 500
+    )
+    st.plotly_chart(fg)
+    # st.subheader("Quick Summary")
+    # st.line_chart(stock["Open"] , use_container_width=True , height= 300 , width= 600 ,)
+cal1, em1, emp2, emp3  = st.columns((2,1,1,1))
+d = "2018-01-02";
+with cal1:
+    ch_d = st.date_input(" Choose Day:",datetime.date(2018, 1, 1))
+    d = str(ch_d)
+
+m1, m2, m3, m4, m5,m6 = st.columns((1,1,1,1,1.7,1.7))
+avb_days = stock_wd_date.index.to_list()
+pi = avb_days.index(d) - 1
+if(d in stock_wd_date.index.to_list()):
+    [o,h,l,c,v] = stock_wd_date.loc[d].tolist()
+    [po,ph,pl,pc,pv] = stock_wd_date.iloc[pi].tolist()
+else:
+    [o,h,l,c,v] = stock_wd_date.loc["2018-01-02"].tolist()
+    [po,ph,pl,pc,pv] = stock_wd_date.iloc[1].tolist()
+change  = ((c - pc) / pc ) * (100)
+ch = str(change.__round__(1)) + "%"
+
+with m1 :
+    s = "Open  " + str(o)
+    new_title = '<p style="background : #3C6997; height : 100% ;padding : 3px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
+    st.markdown(new_title, unsafe_allow_html=True)
+with m2 :
+    s = "High  " + str(h)
+    new_title = '<p style="background : #3C6997; height : 100%;padding : 3px ; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
+    st.markdown(new_title, unsafe_allow_html=True)
+with m3 :
+    s = "Low " + str(l)
+    new_title = '<p style="background : #3C6997; height : 100% ;padding : 3px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
+    st.markdown(new_title, unsafe_allow_html=True)
+with m4 :
+    s = "Close  " + str(c)
+    new_title = '<p style="background : #3C6997; height : 100% ;padding : 2px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
+    st.markdown(new_title, unsafe_allow_html=True)
+with m5 :
+    s = "Volume  " + str(v)
+    new_title = '<p style="background : #5B8C5A; height : 100%;padding : 1px ; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
+    st.markdown(new_title, unsafe_allow_html=True)
+with m6 :
+    s = "Change  " + str(ch)
+    new_title = '<p style="background : #92AC86; height : 100% ;padding : 1px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
+    st.markdown(new_title, unsafe_allow_html=True)
+
+
+st.markdown(sub_title_temp.format("#89B6A5" , "white" , "OPEN RELATIONSHIP"),unsafe_allow_html=True)
+# st.subheader("OPEN RELATIONSHIP")
+variables = stock.columns[1:]
+choice = st.selectbox('With :', variables, help = 'Filter stock to show relationship with one variable.')
+plot1 , plot2 = st.columns((1.5,1))
+with plot1:
     fg = go.Figure()
     fg.add_trace(go.Scatter(
         x = stock.index.values,
@@ -38,11 +132,26 @@ with col2:
 
     fg.add_trace(go.Scatter(
         x = stock.index.values,
-        y = stock[userIn],
-        line=dict(color='orange') , name = userIn + 'Stock Price'
+        y = stock[choice],
+        line=dict(color='orange') , name =  choice + 'Stock Price'
     ))
+    fg.update_layout(
+        xaxis_title = "Time", yaxis_title = "Value",
+        title = "Trends over time",
+        width = 700, height = 500
+    )
     st.plotly_chart(fg)
-
+with plot2:
+    st.write("")
+    st.write("")
+    st.write("")
+    st.write("")
+    fg = px.scatter(stock , x = choice , y = "Open")
+    fg.update_layout(
+        title = "Open vs."+choice,
+        width = 500, height = 400
+    )
+    st.plotly_chart(fg)
 
 # st.markdown("<hr/>",unsafe_allow_html=True)
 
@@ -90,8 +199,16 @@ model = keras.models.load_model("model0.h5")
 #OUTPUT
 #optimizers and loss declaration
 #compiling model
-# FUTURE FORECAST:
+#  ***********************************************************************************
+#FORECAST:
+st.markdown(sub_title_temp.format("#89B6A5" , "white" , "STOCK FORECAST"),unsafe_allow_html=True)
+# st.subheader("STOCK FORECAST")
 nFut = 90
+opt1 , e1 , e2 = st.columns((1,2,2))
+with opt1:
+    nDs = st.text_input("Enter the days range to forecast (1-90)" , 90);
+    nFut = int(nDs)
+# FUTURE FORECAST:
 #GENERATING DATE SEQUENCES FOR FUTURE
 futureDates = pd.date_range(dates[-1], periods=nFut, freq='1d').tolist()
 futureDatesList = []
@@ -113,23 +230,44 @@ trainSet = pd.DataFrame(data, columns=features)
 trainSet.index = dates
 trainSet.index = pd.to_datetime(trainSet.index)
 
-#FORECAST:
-st.subheader("STOCK FORECAST")
-st.subheader("Chart View")
-st.write(FUT_PREDS)
-st.subheader("Visuals")
-fig0 = px.line(x=futureDatesList, y=FUT_PREDS["Open"] ,
-              labels={"x" : "Date" , "y":"Open"} ,
-              height = 500 ,width=900)
-fig0.update_layout(
-    title="FUTUTRE FORECAST OF 3 MONTHS",
-    xaxis_title="Time",
-    yaxis_title="OPEN PRICES",
-    legend_title="Legend Title",
-)
-st.plotly_chart(fig0)
-st.subheader("FORECASTING MODEL SUMMARY")
-st.subheader("Plot 1:")
+# ****************************************************************************
+
+chart , visual = st.columns((1,1.5))
+with chart:
+    fut_preds = FUT_PREDS.reset_index()
+    fig = go.Figure(
+        data = [go.Table (columnorder = [0,1], columnwidth = [15,10],
+                          header = dict(
+                              values = ["Date" , "Open"],
+                              font=dict(size=12, color = 'white'),
+                              fill_color = '#264653',
+                              line_color = 'rgba(255,255,255,0.2)',
+                              align = ['left','center'],
+                              #text wrapping
+                              height=40
+                          )
+                          , cells = dict(
+                values = [fut_preds[K].tolist() for K in fut_preds.columns],
+                font=dict(size=12),
+                align = ['left','center'],
+                line_color = 'rgba(255,255,255,0.2)',
+                height=30))])
+    fig.update_layout(title_text="CHART VIEW",title_font_color = '#264653',title_x=0,margin= dict(l=0,r=10,b=10,t=30), height=480)
+    st.plotly_chart(fig, use_container_width=True)
+with visual:
+    fig0 = px.line(x=futureDatesList, y=FUT_PREDS["Open"] ,
+                   labels={"x" : "Date" , "y":"Open"} ,
+                   height = 500 ,width=750)
+    fig0.update_layout(
+        title="VISUALS",
+        xaxis_title="Time",
+        yaxis_title="OPEN PRICES",
+        legend_title="Legend Title",
+    )
+    st.plotly_chart(fig0)
+
+st.markdown(sub_title_temp.format("#89B6A5" , "white" , "MODEL SUMMARY"),unsafe_allow_html=True)
+# st.subheader("FORECASTING MODEL SUMMARY")
 #PLOTTING actual vs. predicted
 # Plotting
 STARTDATE = TRAIN_PREDS.index[0]
@@ -159,6 +297,6 @@ fg.update_layout(
     xaxis_title="Time",
     yaxis_title="Stock Open Prices",
     height = 500 ,
-    width = 900
+    width = 1200
 )
 st.plotly_chart(fg)
