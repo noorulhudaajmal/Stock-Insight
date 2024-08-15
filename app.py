@@ -1,13 +1,11 @@
 import keras.models
 import pandas as pd
 import streamlit as st
-import cufflinks as cf
 import plotly.express as px
 import datetime
 # init_notebook_mode(connected=True)
-from forecast.open.open import openForecast
-from forecast.volume.volume import volumeForecast
-cf.go_offline()
+from forecast import openForecast
+from forecast.volume import volumeForecast
 import plotly.graph_objects as go
 
 st.set_page_config(page_title= "Stock Insight" , layout="wide" )
@@ -29,9 +27,9 @@ st.write("")
 st.write("")
 
 user_in = st.text_input("Enter the company name : " , "MEBL")
-stock = pd.read_csv("./data/meb.csv"); #importing dataset
-model0 = keras.models.load_model("./forecast/models/model0.h5")
-model1 = keras.models.load_model("./forecast/models/model1.h5")
+stock = pd.read_csv("data/meb.csv"); #importing dataset
+model0 = keras.models.load_model("forecast/models/model0.h5")
+model1 = keras.models.load_model("forecast/models/model1.h5")
 
 st.markdown(sub_title_temp.format("#646F58" , "white" , user_in+" STOCK FROM 2018 - 2022"),unsafe_allow_html=True)
 # st.subheader(user_in , " STOCK FROM 2018 - 2022")
@@ -322,3 +320,7 @@ fg0.update_layout(
     width = 1200
 )
 st.plotly_chart(fg0)
+
+
+# pip install tensorflow==2.10.0 pandas==1.4.4 streamlit==1.12.0 plotly==5.11.0
+# pip install tensorflow==2.16.0 pandas==1.5.3 streamlit==1.24.0 plotly==5.15.0
