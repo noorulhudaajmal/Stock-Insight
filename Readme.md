@@ -27,21 +27,21 @@ pip install -r requirements.txt
 1. **Load Data:** The application initializes by loading stock data (default data) from a CSV file.
 
 2. **Select Stock and Date Range:**
-- Choose a stock ticker symbol from available list.
-- Select a start and end date for the data range.
+   - Choose a stock ticker symbol from available list.
+   - Select a start and end date for the data range.
 
 3. **View Historical Data:**
-- Display historical stock data in a table.
-- View a quick summary of stock performance.
-- Analyze Specific Dates:
-  Select a specific date to view stock open, high, low, close prices, volume, and percentage change from the previous trading day.
+   - Display historical stock data in a table.
+   - View a quick summary of stock performance.
+   - Analyze Specific Dates:
+     Select a specific date to view stock open, high, low, close prices, volume, and percentage change from the previous trading day.
 
 4. **Explore Relationships Among Variables:**
-- Choose a variable to explore its relationship with other stock variables through interactive plots.
+   - Choose a variable to explore its relationship with other stock variables through interactive plots.
 
 5. **Forecasting:**
-- Enter the number of days to forecast for both stock prices and trading volumes.
-- Visualize the forecast results with tables and line charts.
-- Compare actual vs. predicted values.
+   - Enter the number of days to forecast for both stock prices and trading volumes.
+   - Visualize the forecast results with tables and line charts.
+   - Compare actual vs. predicted values.
 
 ---
