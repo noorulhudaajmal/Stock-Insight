@@ -1,1 +1,0 @@
-#make sure that compiler treats the open folder as package to import files easily
