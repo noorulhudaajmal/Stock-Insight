@@ -82,7 +82,7 @@ with input_choices[3]:
 
 stock = st.session_state['stock']
 
-st.markdown(sub_title_temp.format("#646F58", "white", ticker + " STOCK FROM 2018 - 2022"), unsafe_allow_html=True)
+st.markdown(sub_title_temp.format("#646F58", "white", ticker + f" STOCK FROM {stock['Date'].min().year} - {stock['Date'].max().year}"), unsafe_allow_html=True)
 
 stock_wd_date = stock.set_index("Date")
 col1, col2 = st.columns((1, 1.5))
