@@ -1,14 +1,16 @@
 import keras.models
+import datetime
 import pandas as pd
 import streamlit as st
+from psx import stocks, tickers
 import plotly.express as px
-import datetime
-# init_notebook_mode(connected=True)
-from forecast import openForecast
-from forecast.volume import volumeForecast
 import plotly.graph_objects as go
+from plots import historical_data_table, quick_summary_plot, stock_trend_overtime, stock_variables_relation_plot
+from forecast.volume.volume import volumeForecast
+from forecast.open.open import openForecast
 
-st.set_page_config(page_title= "Stock Insight" , layout="wide" )
+
+st.set_page_config(page_title="Stock Insight", layout="wide")
 
 title_temp = """
 <div style="background-color:{};padding:10px;border-radius:10px">
@@ -22,140 +24,145 @@ sub_title_temp = """
 """
 head_title_temp = """<h6 style="text-align:left;margin-top:2px">{}</h6>"""
 
-st.markdown(title_temp.format('#1E3231','white' , "STOCK INSIGHT"),unsafe_allow_html=True)
+st.markdown(title_temp.format('#1E3231', 'white', "STOCK INSIGHT"), unsafe_allow_html=True)
 st.write("")
 st.write("")
 
-user_in = st.text_input("Enter the company name : " , "MEBL")
-stock = pd.read_csv("data/meb.csv"); #importing dataset
-model0 = keras.models.load_model("forecast/models/model0.h5")
-model1 = keras.models.load_model("forecast/models/model1.h5")
+# Initialize session state for stock data
+if 'stock' not in st.session_state:
+    st.session_state.stock = pd.read_csv("data/meb.csv")
+    st.session_state.stock['Date'] = pd.to_datetime(st.session_state.stock['Date'])
 
-st.markdown(sub_title_temp.format("#646F58" , "white" , user_in+" STOCK FROM 2018 - 2022"),unsafe_allow_html=True)
-# st.subheader(user_in , " STOCK FROM 2018 - 2022")
+def update_stock_data():
+    # Get the selected ticker and date range
+    ticker = st.session_state.ticker
+    start_date = datetime.datetime.combine(st.session_state.start_date, datetime.datetime.min.time())
+    end_date = datetime.datetime.combine(st.session_state.end_date, datetime.datetime.max.time())
+
+    # Fetch new stock data
+    new_stock_data = stocks(ticker, start=start_date, end=end_date)
+    new_stock_data = new_stock_data.reset_index()
+    new_stock_data['Date'] = pd.to_datetime(new_stock_data['Date'])
+
+    # Update session state
+    st.session_state.stock = new_stock_data
+
+# Create input choices
+input_choices = st.columns(4)
+
+with input_choices[0]:
+    ticker = st.selectbox(
+        label="Choose Ticker",
+        options=list(tickers()['symbol']),
+        key='ticker'
+    )
+
+with input_choices[1]:
+    start_date = st.date_input(
+        label="Choose Start Date",
+        min_value=datetime.date(2015, 1, 1),
+        max_value=datetime.date.today(),
+        value=datetime.date(2015, 1, 1),
+        format="DD-MM-YYYY",
+        key='start_date'
+    )
+
+with input_choices[2]:
+    end_date = st.date_input(
+        label="Choose End Date",
+        min_value=datetime.date(2015, 12, 31),
+        max_value=datetime.date.today(),
+        value=datetime.date.today(),
+        format="DD-MM-YYYY",
+        key='end_date'
+    )
+
+with input_choices[3]:
+    st.write("###### ")
+    st.button(label="Search", on_click=update_stock_data)
+
+stock = st.session_state['stock']
+
+st.markdown(sub_title_temp.format("#646F58", "white", ticker + " STOCK FROM 2018 - 2022"), unsafe_allow_html=True)
+
 stock_wd_date = stock.set_index("Date")
-col1 , col2 = st.columns((1,1.5))
+col1, col2 = st.columns((1, 1.5))
 with col1:
-    st.markdown(head_title_temp.format("HISTORICAL DATA"),unsafe_allow_html=True)
-    fig = go.Figure(
-        data = [go.Table (columnorder = [0,1,2,3,4,5], columnwidth = [15,10,10,10,10,10],
-                          header = dict(
-                              values = list(stock.columns),
-                              font=dict(size=12, color = 'white'),
-                              fill_color = '#264653',
-                              line_color = 'rgba(255,255,255,0.2)',
-                              align = ['left','center'],
-                              #text wrapping
-                              height=40
-                          )
-                          , cells = dict(
-                values = [stock[K].tolist() for K in stock.columns],
-                font=dict(size=12 , color = "black"),
-                align = ['left','center'],
-                line_color = 'rgba(255,255,255,0.2)',
-                height=30))])
-    fig.update_layout(title_font_color = '#264653',title_x=0,margin= dict(l=0,r=10,b=10,t=30), height=480)
+    fig = historical_data_table(stock)
     st.plotly_chart(fig, use_container_width=True)
 with col2:
-    st.markdown(head_title_temp.format("QUICK SUMMARY"),unsafe_allow_html=True)
-    fg = px.line(x=stock["Date"], y=stock["Open"] ,
-                 labels={"x" : "Date" , "y":"Open"})
-    fg.update_layout(
-        xaxis_title="Time",
-        yaxis_title="Stock Open Prices",
-        width = 750,
-        height = 500
-    )
-    st.plotly_chart(fg)
-    # st.subheader("Quick Summary")
-    # st.line_chart(stock["Open"] , use_container_width=True , height= 300 , width= 600 ,)
-cal1, em1, emp2, emp3  = st.columns((2,1,1,1))
-d = "2018-01-02";
-with cal1:
-    ch_d = st.date_input(" Choose Day:",datetime.date(2018, 1, 1))
-    d = str(ch_d)
+    fig = quick_summary_plot(stock)
+    st.plotly_chart(fig)
 
-m1, m2, m3, m4, m5,m6 = st.columns((1,1,1,1,1.7,1.7))
-avb_days = stock_wd_date.index.to_list()
-pi = avb_days.index(d) - 1
-if(d in stock_wd_date.index.to_list()):
-    [o,h,l,c,v] = stock_wd_date.loc[d].tolist()
-    [po,ph,pl,pc,pv] = stock_wd_date.iloc[pi].tolist()
-else:
-    [o,h,l,c,v] = stock_wd_date.loc["2018-01-02"].tolist()
-    [po,ph,pl,pc,pv] = stock_wd_date.iloc[1].tolist()
-change  = ((c - pc) / pc ) * (100)
-ch = str(change.__round__(1)) + "%"
+cal1, em1, emp2, emp3 = st.columns((2, 1, 1, 1))
+ch_d = cal1.date_input(" Choose Day:",
+                       min_value=stock['Date'].min().date(),
+                       max_value=stock['Date'].max().date(),
+                       value=stock['Date'].min().date(),
+                       format="DD-MM-YYYY")
+d = datetime.datetime.combine(ch_d, datetime.datetime.min.time())
 
-with m1 :
-    s = "Open  " + str(o)
-    new_title = '<p style="background : #3C6997; height : 100% ;padding : 3px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
-    st.markdown(new_title, unsafe_allow_html=True)
-with m2 :
-    s = "High  " + str(h)
-    new_title = '<p style="background : #3C6997; height : 100%;padding : 3px ; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
-    st.markdown(new_title, unsafe_allow_html=True)
-with m3 :
-    s = "Low " + str(l)
-    new_title = '<p style="background : #3C6997; height : 100% ;padding : 3px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
-    st.markdown(new_title, unsafe_allow_html=True)
-with m4 :
-    s = "Close  " + str(c)
-    new_title = '<p style="background : #3C6997; height : 100% ;padding : 2px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
-    st.markdown(new_title, unsafe_allow_html=True)
-with m5 :
-    s = "Volume  " + str(v)
-    new_title = '<p style="background : #5B8C5A; height : 100%;padding : 1px ; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
-    st.markdown(new_title, unsafe_allow_html=True)
-with m6 :
-    s = "Change  " + str(ch)
-    new_title = '<p style="background : #92AC86; height : 100% ;padding : 1px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">'+s+'</p>'
-    st.markdown(new_title, unsafe_allow_html=True)
+try:
+    m1, m2, m3, m4, m5, m6 = st.columns((1, 1, 1, 1, 1.7, 1.7))
+    avb_days = stock_wd_date.index.to_list()
+    pi = avb_days.index(d) - 1
+    if d in stock_wd_date.index.to_list():
+        [o, h, l, c, v] = stock_wd_date.loc[d].tolist()
+        [po, ph, pl, pc, pv] = stock_wd_date.iloc[pi].tolist()
+    else:
+        [o, h, l, c, v] = stock_wd_date.iloc[0].tolist()
+        [po, ph, pl, pc, pv] = stock_wd_date.iloc[1].tolist()
+    change = ((c - pc) / pc) * 100
+    ch = str(change.__round__(1)) + "%"
+
+    with m1:
+        s = "Open  " + str(o)
+        new_title = '<p style="background : #3C6997; height : 100% ;padding : 3px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">' + s + '</p>'
+        st.markdown(new_title, unsafe_allow_html=True)
+    with m2:
+        s = "High  " + str(h)
+        new_title = '<p style="background : #3C6997; height : 100%;padding : 3px ; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">' + s + '</p>'
+        st.markdown(new_title, unsafe_allow_html=True)
+    with m3:
+        s = "Low " + str(l)
+        new_title = '<p style="background : #3C6997; height : 100% ;padding : 3px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">' + s + '</p>'
+        st.markdown(new_title, unsafe_allow_html=True)
+    with m4:
+        s = "Close  " + str(c)
+        new_title = '<p style="background : #3C6997; height : 100% ;padding : 2px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">' + s + '</p>'
+        st.markdown(new_title, unsafe_allow_html=True)
+    with m5:
+        s = "Volume  " + str(v)
+        new_title = '<p style="background : #5B8C5A; height : 100%;padding : 1px ; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">' + s + '</p>'
+        st.markdown(new_title, unsafe_allow_html=True)
+    with m6:
+        s = "Change  " + str(ch)
+        new_title = '<p style="background : #92AC86; height : 100% ;padding : 1px; margin : 10%;color:White; font-size: 25px; text-align : center;border-radius : 5px">' + s + '</p>'
+        st.markdown(new_title, unsafe_allow_html=True)
+except ValueError:
+    st.error("No stock data listed!!!")
 
 
 st.markdown(sub_title_temp.format("#89B6A5" , "white" , "EXPLORING RELATIONSHIPS AMONG VARIABLES"),unsafe_allow_html=True)
-# st.subheader("OPEN RELATIONSHIP")
 variables = stock.columns[1:]
-choice = st.selectbox('With :', variables, help = 'Filter stock to show relationship with one variable.')
+filter_cols = st.columns(5)
+choice = filter_cols[0].selectbox('With :', variables, help = 'Filter stock to show relationship with one variable.')
 plot1 , plot2 = st.columns((1.5,1))
 with plot1:
-    st.markdown(head_title_temp.format("TRENDS OVER TIME"),unsafe_allow_html=True)
-    fg = go.Figure()
-    fg.add_trace(go.Scatter(
-        x = stock.index.values,
-        y = stock["Open"],
-        line=dict(color='gray') , name = 'Open Stock Price'
-    ))
-
-    fg.add_trace(go.Scatter(
-        x = stock.index.values,
-        y = stock[choice],
-        line=dict(color='orange') , name =  choice + 'Stock Price'
-    ))
-    fg.update_layout(
-        xaxis_title = "Time", yaxis_title = "Value",
-        width = 700, height = 500
-    )
-    st.plotly_chart(fg)
+    fig = stock_trend_overtime(stock, choice)
+    st.plotly_chart(fig, use_container_width=True)
 with plot2:
-    st.markdown(head_title_temp.format("OPEN vs. "+choice),unsafe_allow_html=True)
-    st.write("")
-    st.write("")
-    st.write("")
-    st.write("")
-    fg = px.scatter(stock , x = choice , y = "Open")
-    fg.update_layout(
-        width = 500, height = 400
-    )
-    st.plotly_chart(fg)
+    fig = stock_variables_relation_plot(stock, choice)
+    st.plotly_chart(fig, use_container_width=True)
 
-# st.markdown("<hr/>",unsafe_allow_html=True)
+# ***********************************************************************************
 
+model0 = keras.models.load_model("forecast/models/model0.h5")
+model1 = keras.models.load_model("forecast/models/model1.h5")
 
-# #  ***********************************************************************************
-# #FORECAST:
+# ***********************************************************************************
+# FORECAST:
 st.markdown(sub_title_temp.format("#89B6A5" , "white" , "STOCK FORECAST"),unsafe_allow_html=True)
-# # st.subheader("STOCK FORECAST")
 nFut = 90
 opt1 , e1 , e2 = st.columns((1,2,2))
 with opt1:
