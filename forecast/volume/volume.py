@@ -3,8 +3,7 @@ import numpy as np
 import datetime as dt
 from sklearn.preprocessing import StandardScaler
 import keras
-import cufflinks as cf
-cf.go_offline()
+
 
 # stockv = pd.read_csv("../data/meb.csv")
 
@@ -17,7 +16,9 @@ def to_Timestamp(x):
 def volumeForecast(stockv , model1 , nFutForV):
     # stockV = pd.read_csv("meb.csv")
     datesForV = list(stockv['Date'])
+    datesForV = [date.strftime('%Y-%m-%d') if isinstance(date, pd.Timestamp) else date for date in datesForV]
     datesForV = [dt.datetime.strptime(date, '%Y-%m-%d').date() for date in datesForV]
+    # datesForV = [dt.datetime.strptime(date, '%Y-%m-%d').date() for date in datesForV]
 
 
     featuresForV = list(stockv)[1:]

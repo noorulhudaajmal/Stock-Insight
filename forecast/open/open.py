@@ -3,8 +3,6 @@ import numpy as np
 import datetime as dt
 from sklearn.preprocessing import StandardScaler
 import keras
-import cufflinks as cf
-cf.go_offline()
 
 # stock = pd.read_csv("../data/meb.csv")
 #
@@ -26,7 +24,9 @@ def to_Timestamp(x):
 
 def openForecast(stock , model , nFut):
     dates = list(stock['Date']) #getting dates off the dataframe (stock data)
-    dates = [dt.datetime.strptime(date, '%Y-%m-%d').date() for date in dates] #converting dates to timestamps
+    dates = [date.strftime('%Y-%m-%d') if isinstance(date, pd.Timestamp) else date for date in dates]
+    dates = [dt.datetime.strptime(date, '%Y-%m-%d').date() for date in dates]
+    # dates = [dt.datetime.strptime(date, '%Y-%m-%d').date() for date in dates] #converting dates to timestamps
 
     ## creating dataset of chosen features to work ahead with LSTM-model
     features = list(stock)[1:-1]
