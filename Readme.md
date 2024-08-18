@@ -17,6 +17,10 @@ Stock Insight is a Streamlit application designed to provide insights into stock
 - Plotly
 - psx-data-reader
 
+## LSTM Model Training
+The historical data of top performing PSX companies is used to train the neural network and the model is deployed to forecast future trends. The project aims at forecasting the future Volume(strength indicator of market) and
+Open (the opening price of market) from the past trends.
+
 ## Installation
 To install the necessary packages, use the following commands:
 ```shell
