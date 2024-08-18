@@ -31,7 +31,7 @@ pip install -r requirements.txt
 1. **Load Data:** The application initializes by loading stock data (default data) from a CSV file.
 
 2. **Select Stock and Date Range:**
-   - Choose a stock ticker symbol from available list.
+   - Choose a stock ticker symbol from the available list.
    - Select a start and end date for the data range.
 
 3. **View Historical Data:**
