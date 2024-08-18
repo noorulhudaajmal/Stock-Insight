@@ -1,4 +1,4 @@
-import keras.models
+from keras import models
 import datetime
 import pandas as pd
 import streamlit as st
@@ -157,8 +157,8 @@ with plot2:
 
 # ***********************************************************************************
 
-model0 = keras.models.load_model("forecast/models/model0.h5")
-model1 = keras.models.load_model("forecast/models/model1.h5")
+model0 = models.load_model("forecast/models/model0.h5")
+model1 = models.load_model("forecast/models/model1.h5")
 
 # ***********************************************************************************
 # FORECAST:
@@ -327,7 +327,3 @@ fg0.update_layout(
     width = 1200
 )
 st.plotly_chart(fg0)
-
-
-# pip install tensorflow==2.10.0 pandas==1.4.4 streamlit==1.12.0 plotly==5.11.0
-# pip install tensorflow==2.16.0 pandas==1.5.3 streamlit==1.24.0 plotly==5.15.0
