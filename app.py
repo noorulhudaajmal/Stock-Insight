@@ -3,11 +3,8 @@ import datetime
 import pandas as pd
 import streamlit as st
 from psx import stocks, tickers
-import plotly.express as px
-import plotly.graph_objects as go
 from plots import historical_data_table, quick_summary_plot, stock_trend_overtime, stock_variables_relation_plot, \
-    forecast_table, forecast_plot, open_forecast_model_performance, volume_forecast_table, volume_forecast_plot, \
-    volume_forecast_model_performance
+    forecast_table, forecast_plot, forecast_model_performance
 from forecast.volume.volume import volumeForecast
 from forecast.open.open import openForecast
 
@@ -175,13 +172,11 @@ FUT_PREDS , TRAIN_PREDS , futureDatesList , trainSet = openForecast(stock , mode
 
 chart , visual = st.columns((1,1.5))
 with chart:
-    st.markdown(head_title_temp.format("CHART VIEW"),unsafe_allow_html=True)
     fut_preds = FUT_PREDS.reset_index()
-    fig = forecast_table(fut_preds)
+    fig = forecast_table(fut_preds, var='Open')
     st.plotly_chart(fig, use_container_width=True)
 with visual:
-    st.markdown(head_title_temp.format("VISUALS"),unsafe_allow_html=True)
-    fig = forecast_plot(futureDatesList, FUT_PREDS)
+    fig = forecast_plot(futureDatesList, FUT_PREDS, var='Open')
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -191,7 +186,7 @@ st.markdown(sub_title_temp.format("#89B6A5" , "white" , "MODEL SUMMARY"),unsafe_
 STARTDATE = TRAIN_PREDS.index[0]
 # import plotly.graph_objects as go
 st.markdown(head_title_temp.format("Predicted vs. Actual"),unsafe_allow_html=True)
-fig = open_forecast_model_performance(trainSet, STARTDATE, FUT_PREDS, TRAIN_PREDS)
+fig = forecast_model_performance(trainSet, STARTDATE, FUT_PREDS, TRAIN_PREDS, var='Open', suffix='Price')
 st.plotly_chart(fig, use_container_width=True)
 
 
@@ -209,14 +204,12 @@ FUT_PREDSforV , TRAIN_PREDSforV , futureDatesListForV , trainSetForV = volumeFor
 
 chartV , visualV = st.columns((1,1.5))
 with chartV:
-    st.markdown(head_title_temp.format("CHART VIEW"),unsafe_allow_html=True)
     fut_preds = FUT_PREDSforV.reset_index()
-    fig = volume_forecast_table(fut_preds)
+    fig = forecast_table(fut_preds, var='Volume')
     st.plotly_chart(fig, use_container_width=True)
 
 with visualV:
-    st.markdown(head_title_temp.format("VISUALS"),unsafe_allow_html=True)
-    fig = volume_forecast_plot(futureDatesListForV, FUT_PREDSforV)
+    fig = forecast_plot(futureDatesListForV, FUT_PREDSforV, var='Volume')
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -225,5 +218,5 @@ st.markdown(sub_title_temp.format("#89B6A5" , "white" , "MODEL SUMMARY"),unsafe_
 # Plotting
 STARTDATE = TRAIN_PREDSforV.index[0]
 
-fig = volume_forecast_model_performance(trainSetForV, STARTDATE, FUT_PREDSforV, TRAIN_PREDSforV)
+fig = forecast_model_performance(trainSetForV, STARTDATE, FUT_PREDSforV, TRAIN_PREDSforV, var='Volume', suffix='Volume')
 st.plotly_chart(fig, use_container_width=True)
