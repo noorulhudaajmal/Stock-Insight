@@ -22,9 +22,18 @@ The historical data of top performing PSX companies is used to train the neural 
 Open (the opening price of market) from the past trends.
 
 ## Installation
-To install the necessary packages, use the following commands:
+1. Clone the repo
+```shell
+git clone https://github.com/noorulhudaajmal/Stock-Insight.git
+cd /Stock-Insight
+```
+2. To install the necessary packages, use the following commands:
 ```shell
 pip install -r requirements.txt
+```
+3. Run the app:
+```shell
+streamlit run app.py
 ```
 
 ## Usage
