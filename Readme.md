@@ -1,9 +1,9 @@
 # Stock Insight
-Stock Insight is a Streamlit application designed to provide insights into stock data of PSX listed companies, including historical data, relationships among stock variables, and forecasts for future stock prices and trading volumes.
+Stock Insight is a Streamlit application designed to provide insights into stock data for companies listed on the Pakistan Stock Exchange (PSX), including historical data, relationships among stock variables, and forecasts for future stock prices and trading volumes. It leverages LSTM (Long Short-Term Memory) networks for model training to forecast future stock and trading volumes.
 
 ## Features
 - **Historical Data Table:** View historical stock data with a detailed table.
-- **Quick Summary Plot:** Get a quick overview of stock performance.
+- **Quick Summary:** Get a quick overview of stock performance.
 - **Stock Trend Over Time:** Analyze stock trends over a selected period.
 - **Variable Relationships:** Explore relationships among different stock variables.
 - **Stock Forecasting:** Predict future stock prices and trading volumes using pre-trained models.
