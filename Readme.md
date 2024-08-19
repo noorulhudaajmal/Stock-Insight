@@ -1,5 +1,5 @@
 # Stock Insight
-Stock Insight is a Streamlit application designed to provide insights into stock data, including historical data, relationships among stock variables, and forecasts for future stock prices and trading volumes.
+Stock Insight is a Streamlit application designed to provide insights into stock data of PSX listed companies, including historical data, relationships among stock variables, and forecasts for future stock prices and trading volumes.
 
 ## Features
 - **Historical Data Table:** View historical stock data with a detailed table.
